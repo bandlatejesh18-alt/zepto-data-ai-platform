@@ -63,7 +63,6 @@ def extract_book_data(book, page_url: str) -> dict:
 
     relative_url = book.h3.a["href"]
 
-    # Resolve relative URL against the current page URL
     book_url = urljoin(page_url, relative_url)
 
     category = extract_category(book_url)
