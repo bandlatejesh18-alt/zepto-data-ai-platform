@@ -16,10 +16,16 @@ MODULE_ROOT = Path(__file__).resolve().parent.parent
 RAW_DATA_DIR = MODULE_ROOT / "data" / "raw"
 PROCESSED_DATA_DIR = MODULE_ROOT / "data" / "processed"
 DATABASE_DIR = MODULE_ROOT / "data" / "database"
+OUTPUTS_DIR = MODULE_ROOT / "outputs"
+SQL_RESULTS_DIR = OUTPUTS_DIR / "sql_results"
+
 
 RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
 PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
 DATABASE_DIR.mkdir(parents=True, exist_ok=True)
+OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+SQL_RESULTS_DIR.mkdir(parents=True,exist_ok=True)
+
 
 # -----------------------------
 # URLs
