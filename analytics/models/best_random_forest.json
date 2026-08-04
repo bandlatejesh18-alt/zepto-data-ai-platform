@@ -1,0 +1,9 @@
+{
+    "best_parameters": {
+        "classifier__max_depth": null,
+        "classifier__max_features": "sqrt",
+        "classifier__n_estimators": 100
+    },
+    "best_cross_validation_accuracy": 0.8059,
+    "oob_score": 0.8087
+}

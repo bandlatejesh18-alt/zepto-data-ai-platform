@@ -11,6 +11,8 @@ from sklearn.metrics import (
 )
 
 from preprocessing import (
+    load_cleaned_dataset,
+    split_dataset,
     create_preprocessor,
 )
 
@@ -45,70 +47,6 @@ def print_class_distribution(
     )
 
 
-def evaluate_pipeline(
-    pipeline,
-    X_train,
-    X_test,
-    y_train,
-    y_test,
-):
-    """
-    Train and evaluate a pipeline.
-
-    Args:
-        pipeline:
-            Machine learning pipeline.
-
-        X_train:
-            Training features.
-
-        X_test:
-            Testing features.
-
-        y_train:
-            Training labels.
-
-        y_test:
-            Testing labels.
-
-    Returns:
-        tuple:
-            Precision,
-            Recall,
-            F1 Score.
-    """
-
-    pipeline.fit(
-        X_train,
-        y_train,
-    )
-
-    predictions = pipeline.predict(
-        X_test,
-    )
-
-    precision = precision_score(
-        y_test,
-        predictions,
-    )
-
-    recall = recall_score(
-        y_test,
-        predictions,
-    )
-
-    f1 = f1_score(
-        y_test,
-        predictions,
-    )
-
-    return (
-        precision,
-        recall,
-        f1,
-    )
-
-
 def compare_imbalance_methods(
     X_train,
     X_test,
@@ -116,7 +54,7 @@ def compare_imbalance_methods(
     y_test,
 ):
     """
-    Compare imbalance handling methods.
+    Compare different imbalance handling strategies.
 
     Args:
         X_train:
@@ -132,101 +70,138 @@ def compare_imbalance_methods(
             Testing labels.
 
     Returns:
-        pd.DataFrame
+        pd.DataFrame:
+            Comparison of Precision,
+            Recall and F1 Score.
     """
+
+    # --------------------------------------------------
+    # Preprocess Data
+    # --------------------------------------------------
 
     preprocessor = create_preprocessor()
 
-    # ------------------------------------------
-    # Baseline
-    # ------------------------------------------
-
-    baseline_pipeline = ImbPipeline(
-        steps=[
-            (
-                "preprocessor",
-                preprocessor,
-            ),
-            (
-                "classifier",
-                LogisticRegression(
-                    random_state=42,
-                    max_iter=1000,
-                ),
-            ),
-        ]
-    )
-
-    baseline_precision, baseline_recall, baseline_f1 = evaluate_pipeline(
-        baseline_pipeline,
+    X_train_processed = preprocessor.fit_transform(
         X_train,
+    )
+
+    X_test_processed = preprocessor.transform(
         X_test,
+    )
+
+    # --------------------------------------------------
+    # Baseline Logistic Regression
+    # --------------------------------------------------
+
+    baseline_model = LogisticRegression(
+        random_state=42,
+        max_iter=1000,
+    )
+
+    baseline_model.fit(
+        X_train_processed,
         y_train,
+    )
+
+    baseline_predictions = baseline_model.predict(
+        X_test_processed,
+    )
+
+    baseline_precision = precision_score(
         y_test,
+        baseline_predictions,
     )
 
-    # ------------------------------------------
-    # Class Weight
-    # ------------------------------------------
-
-    balanced_pipeline = ImbPipeline(
-        steps=[
-            (
-                "preprocessor",
-                preprocessor,
-            ),
-            (
-                "classifier",
-                LogisticRegression(
-                    class_weight="balanced",
-                    random_state=42,
-                    max_iter=1000,
-                ),
-            ),
-        ]
+    baseline_recall = recall_score(
+        y_test,
+        baseline_predictions,
     )
 
-    balanced_precision, balanced_recall, balanced_f1 = evaluate_pipeline(
-        balanced_pipeline,
-        X_train,
-        X_test,
+    baseline_f1 = f1_score(
+        y_test,
+        baseline_predictions,
+    )
+
+    # --------------------------------------------------
+    # Logistic Regression with Class Weight
+    # --------------------------------------------------
+
+    balanced_model = LogisticRegression(
+        class_weight="balanced",
+        random_state=42,
+        max_iter=1000,
+    )
+
+    balanced_model.fit(
+        X_train_processed,
         y_train,
+    )
+
+    balanced_predictions = balanced_model.predict(
+        X_test_processed,
+    )
+
+    balanced_precision = precision_score(
         y_test,
+        balanced_predictions,
     )
 
-    # ------------------------------------------
-    # SMOTE
-    # ------------------------------------------
-
-    smote_pipeline = ImbPipeline(
-        steps=[
-            (
-                "preprocessor",
-                preprocessor,
-            ),
-            (
-                "smote",
-                SMOTE(
-                    random_state=42,
-                ),
-            ),
-            (
-                "classifier",
-                LogisticRegression(
-                    random_state=42,
-                    max_iter=1000,
-                ),
-            ),
-        ]
+    balanced_recall = recall_score(
+        y_test,
+        balanced_predictions,
     )
 
-    smote_precision, smote_recall, smote_f1 = evaluate_pipeline(
-        smote_pipeline,
-        X_train,
-        X_test,
+    balanced_f1 = f1_score(
+        y_test,
+        balanced_predictions,
+    )
+
+    # --------------------------------------------------
+    # SMOTE Oversampling
+    # (Training data only)
+    # --------------------------------------------------
+
+    smote = SMOTE(
+        random_state=42,
+    )
+
+    X_train_smote, y_train_smote = smote.fit_resample(
+        X_train_processed,
         y_train,
-        y_test,
     )
+
+    smote_model = LogisticRegression(
+        random_state=42,
+        max_iter=1000,
+    )
+
+    smote_model.fit(
+        X_train_smote,
+        y_train_smote,
+    )
+
+    smote_predictions = smote_model.predict(
+        X_test_processed,
+    )
+
+    smote_precision = precision_score(
+        y_test,
+        smote_predictions,
+    )
+
+    smote_recall = recall_score(
+        y_test,
+        smote_predictions,
+    )
+
+    smote_f1 = f1_score(
+        y_test,
+        smote_predictions,
+    )
+
+    # --------------------------------------------------
+    # Comparison Table
+    # --------------------------------------------------
 
     comparison = pd.DataFrame(
         {
@@ -293,3 +268,43 @@ def save_results(
     )
 
     print(output_path)
+
+
+def main():
+    """
+    Execute imbalance handling comparison.
+    """
+
+    print("Loading cleaned dataset...")
+
+    df = load_cleaned_dataset()
+
+    (
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+    ) = split_dataset(
+        df,
+    )
+
+    print_class_distribution(
+        y_train,
+    )
+
+    comparison = compare_imbalance_methods(
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+    )
+
+    save_results(
+        comparison,
+    )
+
+    print("\nImbalance handling completed successfully!")
+
+
+if __name__ == "__main__":
+    main()
