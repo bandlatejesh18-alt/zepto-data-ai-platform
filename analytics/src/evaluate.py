@@ -13,6 +13,14 @@ from sklearn.metrics import (
     roc_curve,
 )
 
+from preprocessing import (
+    load_cleaned_dataset,
+    split_dataset,
+    create_preprocessor,
+)
+from classification import (
+    fit_models,
+)
 from utils import (
     PLOTS_DIR,
 )
@@ -348,3 +356,51 @@ def save_comparison_table(
     )
 
     print(output_path)
+
+
+def main():
+    """
+    Execute the complete
+    model evaluation pipeline.
+    """
+
+    print(
+        "Loading cleaned dataset..."
+    )
+
+    df = load_cleaned_dataset()
+
+    (
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+    ) = split_dataset(
+        df,
+    )
+
+    preprocessor = create_preprocessor()
+
+    models = fit_models(
+        X_train,
+        y_train,
+        preprocessor,
+    )
+
+    comparison_df = evaluate_all_models(
+        models,
+        X_test,
+        y_test,
+    )
+
+    save_comparison_table(
+        comparison_df,
+    )
+
+    print(
+        "\nModel evaluation completed successfully!"
+    )
+
+
+if __name__ == "__main__":
+    main()
