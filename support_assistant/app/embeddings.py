@@ -1,9 +1,12 @@
 from pathlib import Path
 from sentence_transformers import SentenceTransformer
+from app.chroma_store import (
+    get_collection,
+    store_embeddings,
+)
 
-from config import CHUNK_SIZE
-from retrieval import collection
 
+from app.config import CHUNK_SIZE
 
 # Load the embedding model
 embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -100,45 +103,6 @@ def generate_embeddings(chunks):
     return chunks
 
 
-def store_embeddings(chunks):
-    """
-    Store chunk embeddings inside ChromaDB.
-
-    Args:
-        chunks (list):
-            List of chunk dictionaries.
-
-    Returns:
-        None
-    """
-
-    collection.add(
-        ids=[
-            chunk["chunk_id"]
-            for chunk in chunks
-        ],
-
-        embeddings=[
-            chunk["embedding"].tolist()
-            for chunk in chunks
-        ],
-
-        documents=[
-            chunk["text"]
-            for chunk in chunks
-        ],
-
-        metadatas=[
-            {
-                "document_id": chunk["document_id"]
-            }
-            for chunk in chunks
-        ]
-    )
-
-    print(f"Stored {len(chunks)} chunks in ChromaDB.")
-
-
 if __name__ == "__main__":
 
     print("=" * 70)
@@ -172,4 +136,17 @@ if __name__ == "__main__":
     print("\nFirst 10 embedding values:")
     print(first_chunk["embedding"][:10])
 
+    print("\n✅ Embedding pipeline completed successfully.")
+    
+    # Step 4:
+    # Store embeddings in ChromaDB
+
+    collection = get_collection()
+
+    store_embeddings(
+        collection,
+        chunks,
+    )
+
+    print("✅ Stored embeddings in ChromaDB.")
     print("\n✅ Embedding pipeline completed successfully.")
