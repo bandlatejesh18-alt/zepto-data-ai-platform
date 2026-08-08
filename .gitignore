@@ -57,3 +57,8 @@ dist/
 # Logs
 # ==========================
 *.log
+
+# ==========================
+# ChromaDB local database
+# ==========================
+support_assistant/data/chroma_db/
